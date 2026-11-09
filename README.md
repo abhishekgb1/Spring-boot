@@ -71,7 +71,15 @@ The multi-stage image runs the application as a non-root user.
 | `PORT` | `8080` | HTTP port for local or hosted execution |
 | `RATES_PROVIDER_URL` | `https://open.er-api.com/v6/latest/USD` | Provider endpoint; intended for deployment configuration or compatible test services |
 
-For public hosting, deploy the Docker image or executable JAR to a service that runs Java 17. Set the host's health-check path to `/actuator/health`. This is a server application: GitHub Pages cannot execute its Java backend. No public backend deployment is configured by this repository.
+## Public deployment on Render
+
+[Deploy to Render](https://render.com/deploy?repo=https://github.com/abhishekgb1/Spring-boot)
+
+The included `render.yaml` creates a free Docker web service, checks `/actuator/health`, and limits Java memory for the 512 MB instance. Sign in to Render, open the link above, and create the Blueprint. Render builds and tests the Java project, then provides a public HTTPS URL when deployment succeeds. No database or API key is needed.
+
+Automatic deployment is disabled so copies created from this button do not update unexpectedly. Deploy later changes from the Render dashboard, or enable automatic deployments for your own service.
+
+Free services sleep after inactivity and may take time to wake. Availability remains subject to [Render's free-plan limits](https://render.com/docs/free); hosting is not guaranteed forever. This repository contains deployment configuration, not proof of an active deployment. GitHub Pages cannot execute this application's Java backend.
 
 ## API
 

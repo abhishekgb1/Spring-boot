@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: currency-compass-abhishekgb1
+    runtime: docker
+    plan: free
+    repo: https://github.com/abhishekgb1/Spring-boot
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: off
+    envVars:
+      - key: JAVA_TOOL_OPTIONS
+        value: -Xms64m -Xmx256m -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=64m
