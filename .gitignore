@@ -1,6 +1,10 @@
-node_modules
-dist
+/target/
+/.idea/
+/.vscode/
+*.iml
+.env
+.env.*
+!.env.example
+*.log
 .DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
+/.maven-cache/

@@ -1,0 +1,8 @@
+.git
+.github
+target
+.maven-cache
+.idea
+.vscode
+*.log
+.env*

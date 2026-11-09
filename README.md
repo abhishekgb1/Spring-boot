@@ -1,125 +1,121 @@
-# Currency Converter - Spring Boot
+# Currency Compass
 
-A real-time currency converter application built with Spring Boot backend and HTML/CSS frontend, integrated with ExchangeRate API.
+A working Java 17 / Spring Boot currency converter with a responsive frontend, daily exchange rates, precise decimal calculations and automated tests.
 
-## Features
+This repository originally contained a Maven file and a currency-converter README, but no application source. The missing Java backend and frontend have been implemented. Unused Node, Vite, Drizzle and Replit configurations that referenced missing source folders have been removed. The original files remain in Git history.
 
-- 🌍 **Real-time Exchange Rates** - Live data from ExchangeRate API
-- 💱 **Currency Conversion** - Convert between 9 major currencies
-- 📊 **Exchange Rates Table** - View current rates for popular currencies
-- 🎨 **Modern UI** - Clean, responsive design with CSS animations
-- 🔄 **Auto-refresh** - Rates update automatically every minute
+## Run locally
 
-## Supported Currencies
+Install a JDK 17 or newer and clone this repository. Maven is included through the standard wrapper; the first build needs internet access to download Maven and dependencies.
 
-- 🇺🇸 USD - US Dollar
-- 🇪🇺 EUR - Euro
-- 🇬🇧 GBP - British Pound
-- 🇮🇳 INR - Indian Rupee
-- 🇯🇵 JPY - Japanese Yen
-- 🇨🇦 CAD - Canadian Dollar
-- 🇦🇺 AUD - Australian Dollar
-- 🇨🇭 CHF - Swiss Franc
-- 🇨🇳 CNY - Chinese Yuan
+Windows PowerShell:
 
-## Prerequisites
-
-- Java 17 or higher
-- Maven 3.6+
-- IntelliJ IDEA
-- ExchangeRate API key (free at https://www.exchangerate-api.com/)
-
-## Setup Instructions for IntelliJ IDEA
-
-### 1. Import Project
-1. Open IntelliJ IDEA
-2. Click **File → Open** or **Import Project**
-3. Select the project folder containing `pom.xml`
-4. Choose **Import as Maven Project**
-5. Wait for Maven to download dependencies
-
-### 2. Configure API Key
-1. Get your free API key from https://www.exchangerate-api.com/
-2. In IntelliJ, go to **Run → Edit Configurations**
-3. Create new **Spring Boot** configuration
-4. Set **Main class**: `com.currencyconverter.CurrencyConverterApplication`
-5. In **Environment Variables**, add:
-   ```
-   EXCHANGERATE_API_KEY=your_actual_api_key_here
-   ```
-
-### 3. Run the Application
-1. Click the green **Run** button or press `Ctrl+Shift+F10`
-2. Wait for the application to start (you'll see "Started CurrencyConverterApplication")
-3. Open your browser and go to: **http://localhost:8080**
-
-## Project Structure
-
-```
-src/
-├── main/
-│   ├── java/com/currencyconverter/
-│   │   ├── CurrencyConverterApplication.java
-│   │   ├── controller/
-│   │   │   └── CurrencyController.java
-│   │   ├── service/
-│   │   │   └── ExchangeRateService.java
-│   │   └── model/
-│   │       ├── Currency.java
-│   │       ├── ConversionRequest.java
-│   │       └── ConversionResult.java
-│   └── resources/
-│       ├── static/
-│       │   ├── css/style.css
-│       │   └── js/app.js
-│       ├── templates/
-│       │   └── index.html
-│       └── application.properties
-└── pom.xml
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
 
-## API Endpoints
+macOS / Linux:
 
-- `GET /` - Main application page
-- `POST /api/convert` - Convert currency
-- `GET /api/currencies` - Get supported currencies
-- `GET /api/rates/{baseCurrency}` - Get exchange rates
+```sh
+./mvnw spring-boot:run
+```
 
-## Usage
+Open **http://localhost:8080**. No API key, database, Node.js or IDE is required.
 
-1. **Convert Currency**: Enter amount, select currencies, click "Convert"
-2. **Swap Currencies**: Click the swap button (⇄) between currency dropdowns
-3. **View Rates**: Check the exchange rates table below the converter
-4. **Refresh Rates**: Click the refresh button to get latest rates
+## What works
+
+- Convert between USD, EUR, GBP, INR, JPY, CAD, AUD, CHF and CNY.
+- Swap currencies, view a rates table and see the provider's update timestamp.
+- Validate amounts from 0 to 1 trillion with at most six decimal places.
+- Calculate with `BigDecimal`, then round to the target currency's minor units (JPY: 0 decimals; the other supported currencies: 2).
+- Cache one USD provider snapshot for one hour; derive cross-currency rates from that snapshot.
+- On provider failure, use cached data only when the provider timestamp is within 48 hours, mark it as stale, and back off retries for 60 seconds. With no usable snapshot, return HTTP 503 rather than fabricated rates.
+- Use mobile layouts, keyboard-accessible forms, loading states, clear errors and a retry control.
+
+## Data source
+
+Uses [ExchangeRate-API's open-access endpoint](https://www.exchangerate-api.com/docs/free): `https://open.er-api.com/v6/latest/USD`.
+
+The provider updates once per day. These are reference estimates, not continuously updated market quotes. Bank and transfer-service rates and fees may differ. Attribution is displayed in the app. A “Check rates” action reads the server cache; it does not bypass the one-hour provider cache.
+
+## Build and tests
+
+```sh
+./mvnw -B verify
+java -jar target/currency-converter-1.0.0.jar
+```
+
+On Windows, use `mvnw.cmd` in place of `./mvnw`. Tests use mock snapshots and a local HTTP stub, so they do not require the external exchange-rate provider. They cover cross rates, target-currency rounding, zero and same-currency conversion, caching, stale-cache fallback, outage handling, request validation, provider-response validation, the frontend resource and health endpoint.
+
+GitHub Actions builds and tests every push to main and every pull request, and uploads the executable JAR as an artifact.
+
+## Docker
+
+```sh
+docker compose up --build
+```
+
+Or:
+
+```sh
+docker build -t currency-compass .
+docker run --rm -p 8080:8080 currency-compass
+```
+
+The multi-stage image runs the application as a non-root user.
+
+## Configuration
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `8080` | HTTP port for local or hosted execution |
+| `RATES_PROVIDER_URL` | `https://open.er-api.com/v6/latest/USD` | Provider endpoint; intended for deployment configuration or compatible test services |
+
+For public hosting, deploy the Docker image or executable JAR to a service that runs Java 17. Set the host's health-check path to `/actuator/health`. This is a server application: GitHub Pages cannot execute its Java backend. No public backend deployment is configured by this repository.
+
+## API
+
+| Method | Path | Description |
+| --- | --- | --- |
+| GET | `/` | Converter frontend |
+| GET | `/api/currencies` | Supported currency codes and names |
+| GET | `/api/rates/{baseCurrency}` | Rates against a supported base, `updatedAt` timestamp and `stale` indicator |
+| POST | `/api/convert` | Currency conversion with the rate and provider timestamp |
+| GET | `/actuator/health` | Application liveness (not provider availability) |
+
+Example request:
+
+```sh
+curl -X POST http://localhost:8080/api/convert \
+  -H 'Content-Type: application/json' \
+  -d '{"amount":100,"fromCurrency":"USD","toCurrency":"INR"}'
+```
+
+Success includes `amount`, `fromCurrency`, `toCurrency`, `convertedAmount`, `rate`, `updatedAt` and `stale`. Currency codes are case-insensitive. Invalid inputs return HTTP 400 with a `message`; a provider outage without usable cached data returns HTTP 503.
+
+## Project layout
+
+```text
+src/main/java/com/currencyconverter/
+  CurrencyConverterApplication.java  Application entry point
+  CurrencyController.java            REST endpoints and request validation
+  ExchangeRateService.java           Decimal conversion and caching
+  HttpRatesClient.java               Provider HTTP client and response validation
+  RatesClient.java                   Provider interface
+  RateSnapshot.java                  Immutable rate snapshot
+  SupportedCurrency.java             Supported codes and names
+  ApiExceptionHandler.java           Consistent API errors
+src/main/resources/
+  application.properties             Runtime configuration
+  static/                            HTML, CSS and JavaScript frontend
+src/test/java/com/currencyconverter/  Service, API, provider and outage tests
+.github/workflows/ci.yml              Automated Maven verification
+Dockerfile                           Container build
+```
 
 ## Troubleshooting
 
-### Common Issues:
-
-1. **API Key Error**: Make sure you've set the `EXCHANGERATE_API_KEY` environment variable
-2. **Port Already in Use**: Change port in `application.properties`: `server.port=8081`
-3. **Maven Dependencies**: Right-click project → Maven → Reload project
-
-### IntelliJ Specific:
-
-1. **Java Version**: File → Project Structure → Project → Set Project SDK to Java 17+
-2. **Maven Import**: Enable auto-import in Settings → Build → Build Tools → Maven
-3. **Run Configuration**: Make sure Spring Boot configuration is properly set up
-
-## Development
-
-- **Hot Reload**: Use Spring Boot DevTools (included) for automatic restart on changes
-- **Debug Mode**: Run in debug mode to set breakpoints
-- **Logs**: Check console for detailed API call logs and error messages
-
-## Technologies Used
-
-- **Backend**: Spring Boot 3.2.0, Java 17
-- **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **Template Engine**: Thymeleaf
-- **API**: ExchangeRate API v6
-- **Build Tool**: Maven
-
----
-
-🚀 **Ready to run!** Open in IntelliJ, set your API key, and start converting currencies with real-time rates!
+- **Java not found:** install JDK 17+ and verify `java -version`.
+- **First build cannot download files:** check access to Maven Central. Dependencies are cached after download.
+- **Port occupied:** set `PORT` to another value before starting the app.
+- **Rates unavailable:** check outbound HTTPS access to the provider. The app reports outages and allows retry; it does not use invented fallback values.
